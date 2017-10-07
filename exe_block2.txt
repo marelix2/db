@@ -1,0 +1,51 @@
+execute block
+as
+declare variable kodlokalu integer;
+declare variable lok integer;
+declare variable nazw char(100);
+declare variable zmienna char(1);
+declare variable landlord integer;
+begin
+    for
+    select  rkodlokalu ,rnazwakartylok from czspr_kartylokalifiltru( 'now', 1, null, null, null,  null, null, null)
+    into  :kodlokalu, :nazw
+    do
+    begin
+            if( exists(
+                            select cz.kodkontrahenta
+                            from sh_adresy ss, cz_kontrlok cz
+                            where ss.nazwa is NULL
+                                and cz.kodlokalu = :kodlokalu  and ss.kodkontrahenta = cz.kodkontrahenta
+                          )  )then
+                            zmienna = 't';
+                          else
+                            zmienna = 'f';
+
+     if (zmienna = 't') then
+        begin
+         select sha.kodkontrahenta from sh_adresy sha, cz_kontrlok cz
+         where   sha.kodkontrahenta = cz.kodkontrahenta
+            and sha.nazwa is NULL
+            and cz.kodlokalu = :kodlokalu
+         into :lok;
+          /*
+            select kodkontrahenta  from cz_kontrlok
+            where kodlokalu =:kodlokalu
+            and  symbolstatkl like '@KGWN'
+            into  :landlord;
+          select
+          from sh_adresy
+          where kodkontrahenta = :landlord
+          into :nazw;
+          */
+
+          update sh_adresy
+          set
+          NAZWA = :nazw
+          where
+          kodkontrahenta = :lok;
+          suspend;
+        end
+
+    end 
+end
